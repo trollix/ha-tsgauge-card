@@ -1,4 +1,4 @@
-const CARD_VERSION = '0.1.2';
+const CARD_VERSION = '0.1.3';
 const CARD_NAME = "HA-TSGAUGE-CARD";
 console.info(
   `%c  ${CARD_NAME}  %c  Version ${CARD_VERSION}  `,
