@@ -41,7 +41,7 @@ If you don't use HACS please change the url accordingly.
 | cardwidth        | int    | 300     | width of the card in pixels (see below)          |
 | outer            | object |         | config for the outer gauge                       |
 | inner            | object |         | config for the inner gauge                       |
-| fontsize         | int    |  20     | fontsize of entities                             |
+| fontsize         | int    |  20     | fontsize of displayed entities                   |
 
 ### gauge config
 
@@ -56,6 +56,7 @@ Both gauges have the same attributes:
 | min       | int    |         | minimum value                                                    |
 | max       | int    |         | maximum value                                                    |
 | colors    | object |         | color config (optional)                                          |
+| decval    | int    |         | number of decimals                                               |
 
 ### cardwidth
 

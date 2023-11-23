@@ -71,13 +71,19 @@ class TSGaugeCard extends HTMLElement {
     } 
     if (!this.config.outer.fontsize) { 
       this.config.outer.fontsize = this.config.fontsize; 
-    } if (!this.config.inner.fontsize) { 
+    } 
+    if (!this.config.inner.fontsize) { 
       this.config.inner.fontsize = this.config.fontsize; 
     }
 
-    if (!this.config.dec_cut) {
-      this.config.dec_cut = true;
+    // Add decimal option
+    if (!this.config.inner.decval) {
+      this.config.inner.decval = 1;
     }
+    if (!this.config.outer.decval) {
+      this.config.outer.decval = 1;
+    }
+
   }
 
   _update() {
@@ -111,10 +117,20 @@ class TSGaugeCard extends HTMLElement {
   }
 
   _updateGauge(gauge) {
+
     const gaugeConfig = this.config[gauge];
     const value = this._getEntityStateValue(this._hass.states[gaugeConfig.entity], gaugeConfig.attribute);
+    let l_decval = 0;
+
+    if (gauge = 'outer') {
+      l_decval =  this.config.outer.decval
+    }
+    if (gauge = 'inner') {
+      l_decval =  this.config.inner.decval
+    }
+
     this._setCssVariable(this.nodes.content, gauge + '-angle', this._calculateRotation(value, gaugeConfig));
-    this.nodes[gauge].value.innerHTML = this._formatValue(value, gaugeConfig);
+    this.nodes[gauge].value.innerHTML = this._formatValue(value, gaugeConfig, l_decval);
     if (gaugeConfig.label) {
       this.nodes[gauge].label.innerHTML = gaugeConfig.label;
     }
@@ -138,10 +154,13 @@ class TSGaugeCard extends HTMLElement {
     return event;
   }
 
-  _formatValue(value, gaugeConfig) {
+  _formatValue(value, gaugeConfig, decval) {
     if (gaugeConfig.unit) {
+      
       // Cut if décimals
-      return Math.trunc(value) + gaugeConfig.unit;
+      let number = parseFloat(value);
+      number.toFixed(decval);
+      return Math.trunc(number) + gaugeConfig.unit;
     }
 
     return value;
