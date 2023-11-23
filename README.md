@@ -59,17 +59,14 @@ Both gauges have the same attributes:
 ### cardwidth
 
 You may use the config value _cardwidth_ to set the overall width of the card as an absolute value in pixels.
-All elements of the gauge are sized relative to this so that the gauge scales to this, _but_ the card is not
-responsive for now, i.e. it doesn't resize automatically.
+All elements of the gauge are sized relative to this so that the gauge scales to this, _but_ the card is not responsive for now, i.e. it doesn't resize automatically.
 
 ### color config
 
 Colors can be configured as list of pairs of each a color and a minimum value.
 
-If a gauges value is greater than or equal to one of those minimum values, the according color 
-is used for that gauge. If no color is found, the last color in the list is used as a fallback.
-To use a single color regardless of the value just use a single list entry with any value to always trigger
-the fallback.
+If a gauges value is greater than or equal to one of those minimum values, the according color is used for that gauge. If no color is found, the last color in the list is used as a fallback.
+To use a single color regardless of the value just use a single list entry with any value to always trigger the fallback.
 
 By default, colors for the inner gauge are shaded by 25% (see option _shadeInner_).
 
