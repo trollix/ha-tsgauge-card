@@ -2,16 +2,14 @@
 
 HA Gauges in one, built mostly with CSS.
 
-![Sun Card 2](https://img.shields.io/github/v/release/trollix/tsgauge-card)
+![TSGauge Card](https://img.shields.io/github/v/release/trollix/ha-tsgauge-card)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=flat)](https://github.com/custom-components/hacs)
 
-
 ## Preview
 
-![TSGauge Card](https://github.com/trollix/tsgauge-card/blob/main/img01.png?raw=true "TSGauge Card")
-
+![TSGauge Card](https://github.com/trollix/ha-tsgauge-card/blob/main/img01.png?raw=true "TSGauge Card")
 
 Heavily inspired by [ciotlosm's gauge-card](https://github.com/ciotlosm/custom-lovelace/), but completly written
 from scratch.
@@ -22,6 +20,7 @@ Use [HACS](https://github.com/custom-components/hacs) (recommended)
 or download [dual-gauge-card.js](https://github.com/custom-cards/dual-gauge-card/raw/master/dual-gauge-card.js) and place it in your www directory.
 
 In your ui-lovelace.yaml add this:
+
 ```yaml
   - url: /community_plugin/dual-gauge-card/dual-gauge-card.js
     type: js
@@ -63,7 +62,6 @@ You may use the config value _cardwidth_ to set the overall width of the card as
 All elements of the gauge are sized relative to this so that the gauge scales to this, _but_ the card is not
 responsive for now, i.e. it doesn't resize automatically.
 
-
 ### color config
 
 Colors can be configured as list of pairs of each a color and a minimum value.
@@ -84,64 +82,66 @@ Colors, as well as the min and max values, may be configured once for both gauge
 ## Example
 
 The example on the screenshot is configured like this:
+
+```yaml
+type: custom:dual-gauge-card
+title: Living room
+min: -20
+max: 40
+outer:
+  entity: climate.living_room
+  attribute: current_temperature
+  label: "Current"
+  unit: "°C"
+inner:
+  entity: climate.living_room
+  label: "Target"
+  attribute: temperature
+  unit: "°C"
+colors:
+  - color: "var(--label-badge-red)"
+    value: 27.5
+  - color: "var(--label-badge-green)"
+    value: 25
+  - color: "var(--label-badge-yellow)"
+    value: 18
+  - color: "var(--label-badge-blue)"
+    value: 0
+  - color: "var(--paper-blue-400)"
+    value: -40
 ```
-- type: custom:dual-gauge-card
-  title: Living room
-  min: -20
-  max: 40
-  outer:
-    entity: climate.living_room
-    attribute: current_temperature
-    label: "Current"
-    unit: "°C"
-  inner:
-    entity: climate.living_room
-    label: "Target"
-    attribute: temperature
-    unit: "°C"
+
+In this example, the outer gauge has individual min and max values and uses default colors, whereas the inner
+gauge has individual colors and uses the common min and max values.
+
+```yaml
+
+type: custom:dual-gauge-card
+title: Living room
+min: -20
+max: 40
+outer:
+  entity: climate.living_room
+  attribute: current_temperature
+  label: "Current"
+  unit: "°C"
+  min: -30
+  max: 50
+inner:
+  entity: climate.living_room
+  label: "Target"
+  attribute: temperature
+  unit: "°C"
   colors:
-    - color: "var(--label-badge-red)"
-      value: 27.5
     - color: "var(--label-badge-green)"
       value: 25
     - color: "var(--label-badge-yellow)"
       value: 18
     - color: "var(--label-badge-blue)"
       value: 0
-    - color: "var(--paper-blue-400)"
-      value: -40
 ```
 
-In this example, the outer gauge has individual min and max values and uses default colors, whereas the inner
-gauge has individual colors and uses the common min and max values.
-```
-- type: custom:dual-gauge-card
-  title: Living room
-  min: -20
-  max: 40
-  outer:
-    entity: climate.living_room
-    attribute: current_temperature
-    label: "Current"
-    unit: "°C"
-    min: -30
-    max: 50
-  inner:
-    entity: climate.living_room
-    label: "Target"
-    attribute: temperature
-    unit: "°C"
-    colors:
-      - color: "var(--label-badge-green)"
-        value: 25
-      - color: "var(--label-badge-yellow)"
-        value: 18
-      - color: "var(--label-badge-blue)"
-        value: 0
-```
+![TSGauge Card Param](https://github.com/trollix/ha-tsgauge-card/blob/main/img02.png?raw=true "TSGauge Card Param")
 
-
-![Sun Card Param](https://github.com/trollix/tsgauge-card/blob/main/img02.png?raw=true "Sun Card Param")
-
-[![releases-shield](https://img.shields.io/github/release-date/trollix/tsgauge-card)](https://img.shields.io/github/release-date/trollix/tsgauge-card)
-[![License-schield](https://img.shields.io/github/license/trollix/tsgauge-card)](https://img.shields.io/github/license/trollix/tsgauge-card)
+[![releases-shield](https://img.shields.io/github/release-date/trollix/ha-tsgauge-card)](https://img.shields.io/github/release-date/trollix/ha-tsgauge-card)
+[![License-schield](https://img.shields.io/github/license/trollix/ha-tsgauge-card)](https://img.shields.io/github/license/trollix/ha-tsgauge-card)
