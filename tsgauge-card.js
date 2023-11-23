@@ -1,4 +1,4 @@
-const CARD_VERSION = '0.1.10';
+const CARD_VERSION = '0.1.11';
 const CARD_NAME = "HA-TSGAUGE-CARD";
 console.info(
   `%c  ${CARD_NAME}  %c  Version ${CARD_VERSION}  `,
@@ -131,6 +131,7 @@ class TSGaugeCard extends HTMLElement {
 
     this._setCssVariable(this.nodes.content, gauge + '-angle', this._calculateRotation(value, gaugeConfig));
     this.nodes[gauge].value.innerHTML = this._formatValue(value, gaugeConfig, l_decval);
+    
     if (gaugeConfig.label) {
       this.nodes[gauge].label.innerHTML = gaugeConfig.label;
     }
@@ -139,6 +140,7 @@ class TSGaugeCard extends HTMLElement {
     if (color) {
       this._setCssVariable(this.nodes.content, gauge + '-color', color);
     }
+
   }
 
   _showDetails(gauge) {
@@ -158,8 +160,12 @@ class TSGaugeCard extends HTMLElement {
     
       // Cut if décimals
     let number = parseFloat(value);
-    number = number.toFixed(decval);
-    
+    if (decval <1) {
+      number = Math.trunc(number);
+    } else {
+      number = number.toFixed(decval);
+    }
+
     if (gaugeConfig.unit) {
       return number + gaugeConfig.unit;
     } else {
