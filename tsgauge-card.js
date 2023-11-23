@@ -165,7 +165,7 @@ class TSGaugeCard extends HTMLElement {
     } else {
       number = number.toFixed(decval);
     }
-console.info("number:", number, decval);
+    // LOG - console.info("number:", number, decval);
     if (gaugeConfig.unit) {
       return number + gaugeConfig.unit;
     } else {
