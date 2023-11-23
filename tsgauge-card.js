@@ -6,178 +6,415 @@ console.info(
     'color: #000; font-weight: bold; background: #ddd',
 );
 
-class TSgaugeCard extends HTMLElement {
-
-    setConfig(config) {
-      if(!config.entities) {
-        throw new Error("You need to define an entities");
-      }
-      this.config=config;
-    }
-
-    getCardSize() {
-      if(this.barData) return math.trunc((this.barData.length*this.metric.bar_h)/50);
-      else return 1; 
-    }
-
+class TSGaugeCard extends HTMLElement {
   set hass(hass) {
+    this._hass = hass;
 
-      this._hass=hass;
+    if (!this.card) {
+      this._createCard();
+    }
 
-      // Initialize the content if it's not there yet.
-      if(!this.canvas) {
+    this._update();
+  }
 
+  setConfig(config) {
+    if (!config.inner|| !config.inner.entity) {
+      throw new Error('You need to define an entity for the inner gauge');
+    }
+    if (!config.outer || !config.outer.entity) {
+      throw new Error('You need to define an entity for the outer gauge');
+    }
+    this.config = JSON.parse(JSON.stringify(config));
 
-        // Define color constant
-        this._compStyle=getComputedStyle(document.getElementsByTagName('body')[0]);
-        this.fonts={}
-        this.fonts.name=this._compStyle.getPropertyValue("--paper-font-body1_-_font-size")+" "+this._compStyle.getPropertyValue("--paper-font-body1_-_font-family"); 
+    if (!this.config.min) {
+      this.config.min = 0;
+    }
+    if (!this.config.max) {
+      this.config.max = 100;
+    }
 
-        this.barData=[];
-   
-        // Check config for generate preview card
-        if(this.config.entities&&Array.isArray(this.config.entities)&&this.config.entities.length==1&&this.config.entities[0].entity&&this.config.entities[0].entity=="<enter base entity name>") {
-        
-          // Create full the object copy for prevent use preview configuration
-          this.config=JSON.parse(JSON.stringify(this.config));
+    if (!this.config.inner.min) {
+      this.config.inner.min = this.config.min;
+    }
+    if (!this.config.inner.max) {
+      this.config.inner.max = this.config.max;
+    }
 
-          this.config.title=null;
-          this.config.entities=[];
-          for(let i in this._hass.states) {
-            if(i.startsWith("sensor.")&&i.endsWith("_power")) {
-              console.log(i);
-              console.dir(this._hass.states[i]);
-              if(this.config.entities.push({entity:i,icon:"mdi:power-socket-de",name:this._hass.states[i].attributes.friendly_name})>3) break;
-            }
-          }
+    if (!this.config.outer.min) {
+      this.config.outer.min = this.config.min;
+    }
+    if (!this.config.outer.max) {
+      this.config.outer.max = this.config.max;
+    }
 
-      }
+    if (!this.config.hasOwnProperty('shadeInner')) {
+      this.config.shadeInner = true
+    }
 
-      
-      if(this.config.entities) {
-        
-        // Prepare entity array
-        let a=Array.isArray(this.config.entities)?this.config.entities:[this.config.entities];
-        for(let i in a) this.barData.push({ut:a[i].name??"",t:"",m:"",e:a[i].entity,i:a[i].icon,d:0,h:null,st:a[i].state??null,bar_fg:a[i].barcolor??null});  
-          //ut-user name e-entity i-icon d-cur.data h-hist.data st-entity on/off bar_fg-individual bar color 
-        }
+    if (!this.config.inner.colors) {
+      this.config.inner.colors = this.config.colors;
+    }
+    if (!this.config.outer.colors) {
+      this.config.outer.colors = this.config.colors;
+    }
 
-        // Define metrics
-        this.metric={}
-        this.metric.padding=10;
-        this.metric.iconsize=parseInt(this._compStyle.getPropertyValue("--paper-font-headline_-_font-size"));//24;//  style.getPropertyValue("--mdc-icon-size");
-        this.metric.iconwidth=this.metric.iconsize;
-        this.metric.chartwidth=146;
+    if (this.config.inner.colors) {
+      this.config.inner.colors.sort((a, b) => a.value < b.value ? 1 : -1);
+    }
+    if (this.config.outer.colors) {
+      this.config.outer.colors.sort((a, b) => a.value < b.value ? 1 : -1);
+    }
 
-        this.size_w = Math.max(this.config.width??300,this.offsetWidth);
-        this.size_h = Math.max(this.config.height??(this.barData.length>0?this.barData.length*(this.metric.iconsize*2):200),this.offsetHeight);
-
-        // Calc bar height
-        if(this.barData.length) {
-          this.metric.bar_h=(this.size_h-this.metric.padding)/this.barData.length;
-        }
-
-        // Range
-        this.maxpos=this.config.rangemax>0?this.config.rangemax:2000; 
-        // Convert range value to log10 scale
-        this.maxposraw=this.maxpos;
-
-        switch(this.config.scaletype?this.config.scaletype.toLowerCase():"log10") {
-          case "linear": break;
-          case "log10": this.maxpos=Math.log10(this.maxpos);break;
-        } 
-      
-        // Create card content
-        let cnthtml=`<ha-card header="${this.config.title??''}" style="line-height:0;"><div style="position:relative;">`
-        cnthtml+=   ` <canvas class="card-content" width="${this.size_w}px" height="${this.size_h}px" tabindex="1" style="border-radius: var(--ha-card-border-radius,12px); padding:0"></canvas>`
-
-        // Add icon element
-        for(let i in this.barData) {
-          if(this.barData[i].i) {
-            let edata="";
-            if(this.barData[i].st) {
-              edata='data-entity="'+this.barData[i].st+'"';
-            }
-            cnthtml+=`<ha-icon id="tdvbar_${i}" icon="${this.barData[i].i}" ${edata} style="${edata?"cursor:pointer;":""} position: absolute; left:${this.metric.padding}px; top:${this.metric.bar_h*i+this.metric.padding+(((this.metric.bar_h-this.metric.padding)-this.metric.iconsize)/2)}px;"></ha-icon>`;//+(((this.metric.bar_h-this.metric.padding)-this.metric.iconsize)/2)
-          }  
-        } 
-
-        cnthtml+=   `</div></ha-card>`;
-        this.innerHTML=cnthtml;
-
-        this.canvas=this.querySelector("canvas");
-        this.ctx=this.canvas.getContext("2d");
-        // Calc font metric
-        this.ctx.save();
-        this.ctx.font=this.fonts.name;
-        let m=this.ctx.measureText("AQq");
-        this.metric.nameheight=m.fontBoundingBoxAscent+m.fontBoundingBoxDescent+5;
-        this.ctx.restore();
-        //-------------------------------
-        // set click event handler 
-        this.querySelectorAll("ha-icon").forEach(elAnchor=> {
-          elAnchor.addEventListener("click",(ev)=> {
-            let e=ev.target.getAttribute("data-entity"); 
-            if(e) {
-              ev.stopPropagation();
-              //hass.callService("switch", "toggle", {entity_id:e});
-              this._fire("hass-more-info", { entityId: e });
-            }
-          });
-        });
-
-      this.canvas.addEventListener("click",(ev)=>
-       {
-        ev.stopPropagation();
-        let x,y;
-        if(ev.offsetX||ev.offsetY){x=ev.offsetX;y=ev.offsetY;} else {x=ev.layerX;y=ev.layerY;} 
-        if(this.metric.bar_h&&this.barData&&this.barData.length) 
-         {
-          let itemnum=Math.trunc(y/this.metric.bar_h);
-          if(itemnum>=0&&itemnum<this.barData.length)
-           {
-            this._fire("hass-more-info", { entityId:this.barData[itemnum].e});
-           }
-         }
-       });
-      //-------------------------------
-      new ResizeObserver(()=>
-       {
-//console.log("ResizeObserver");
-//debugger
-        this.size_w=this.offsetWidth;//this.parentElement.clientWidth-8;//this.clientWidth;
-        //console.log('content dimension changed',this.clientWidth,this.clientHeight);
-        this.canvas.width=this.size_w-2;
-        //this.Context.canvas.height=this.h;
-
-       }).observe(this);
-
-
-   }
+    // Add from github issues - https://github.com/custom-cards/dual-gauge-card/issues/45
+    if (!this.config.fontsize) { 
+      this.config.fontsize = 20; 
+    } 
+    if (!this.config.outer.fontsize) { 
+      this.config.outer.fontsize = this.config.fontsize; 
+    } if (!this.config.inner.fontsize) { 
+      this.config.inner.fontsize = this.config.fontsize; 
+    }
 
   }
 
+  _update() {
+    if (this._hass.states[this.config['inner'].entity] == undefined ||
+       this._hass.states[this.config['outer'].entity] == undefined) {
+      console.warn("Undefined entity");
+      if (this.card) {
+        this.card.remove();
+      }
 
-  static getStubConfig()
-   {
-    //debugger
-    return {title:"Optional card title",
-            rangemax:2000, 
-            entities:[{entity:"<enter base entity name>",
-                       name:  "Parameter name",
-                       icon:  "mdi:power-socket-de",
-                       state: "<enter switch entity name>"}] 
-           }
-   }
- }
+      this.card = document.createElement('ha-card');
+      if (this.config.header) {
+        this.card.header = this.config.header;
+      }
 
-customElements.define("tsgauge-card", TSGaugeCard);
+      const content = document.createElement('p');
+      content.style.background = "#e8e87a";
+      content.style.padding = "8px";
+      content.innerHTML = "Error finding these entities:<br>- " +
+        this.config['inner'].entity +
+        "<br>- " + this.config['outer'].entity;
+      this.card.appendChild(content);
+      
+      this.appendChild(this.card);
+      return;
+    } else if (this.card && this.card.firstElementChild.tagName.toLowerCase() == "p") {
+      this._createCard();
+    }
+    this._updateGauge('inner');
+    this._updateGauge('outer');
+  }
 
-window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "tsgauge-card",
-  name: "TSGAUGE CARD",
-  preview: true, // Optional - defaults to false
-  description: "Simple Javascript to display gauges", // Optional
-  documentationURL: "https://github.com/trollix/ha-tsgauge-card"
-});
+  _updateGauge(gauge) {
+    const gaugeConfig = this.config[gauge];
+    const value = this._getEntityStateValue(this._hass.states[gaugeConfig.entity], gaugeConfig.attribute);
+    this._setCssVariable(this.nodes.content, gauge + '-angle', this._calculateRotation(value, gaugeConfig));
+    this.nodes[gauge].value.innerHTML = this._formatValue(value, gaugeConfig);
+    if (gaugeConfig.label) {
+      this.nodes[gauge].label.innerHTML = gaugeConfig.label;
+    }
+
+    const color = this._findColor(value, gaugeConfig);
+    if (color) {
+      this._setCssVariable(this.nodes.content, gauge + '-color', color);
+    }
+  }
+
+  _showDetails(gauge) {
+    const event = new Event('hass-more-info', {
+      bubbles: true,
+      cancelable: false,
+      composed: true
+    });
+    event.detail = {
+      entityId: this.config[gauge].entity
+    };
+    this.card.dispatchEvent(event);
+    return event;
+  }
+
+  _formatValue(value, gaugeConfig) {
+    if (gaugeConfig.unit) {
+      // Cut if décimals
+      return value + gaugeConfig.unit + " | ";
+    }
+
+    return value;
+  }
+
+  _getEntityStateValue(entity, attribute) {
+    if (!attribute) {
+      if(isNaN(entity.state)) return "-" ; //check if entity state is NaN
+      else return entity.state;
+    }
+
+    // return entity.attributes[attribute];
+    if(isNaN(entity.attributes[attribute])) return "-" ; //check if entity attribute is NaN
+    else return entity.attributes[attribute];
+  }
+
+  _calculateRotation(value, gaugeConfig) {
+    if(isNaN(value)) return '180deg'; //check if value is NaN
+    const maxTurnValue = Math.min(Math.max(value, gaugeConfig.min), gaugeConfig.max);
+    return (180 + (5 * (maxTurnValue - gaugeConfig.min)) / (gaugeConfig.max - gaugeConfig.min) / 10 * 360) + 'deg';
+  }
+
+  _findColor(value, gaugeConfig) {
+    if (!gaugeConfig.colors) return;
+
+    var i = 0,
+      count = gaugeConfig.colors.length - 1;
+    for (; i < count; i++) {
+      if (value >= gaugeConfig.colors[i].value) return gaugeConfig.colors[i].color;
+    }
+
+    return gaugeConfig.colors[count].color;
+  }
+
+  _createCard() {
+    if (this.card) {
+      this.card.remove();
+    }
+
+    this.card = document.createElement('ha-card');
+    if (this.config.header) {
+      this.card.header = this.config.header;
+    }
+
+    const content = document.createElement('div');
+    this.card.appendChild(content);
+
+    this.styles = document.createElement('style');
+    this.card.appendChild(this.styles);
+
+    this.appendChild(this.card);
+
+    content.classList.add('tsgauge-card');
+    content.innerHTML = `
+      <div class="tsgauge">
+        <div class="gauge-frame">
+          <div class="gauge-background circle-container">
+            <div class="circle"></div>
+          </div>
+
+          <div class="outer-gauge circle-container">
+            <div class="circle"></div>
+          </div>
+
+          <div class="inner-gauge circle-container small-circle">
+            <div class="circle"></div>
+          </div>
+
+
+          <div class="gauge-value gauge-value-outer"></div>
+          <div class="gauge-label gauge-label-outer"></div>
+
+          <div class="gauge-value gauge-value-inner"></div>
+          <div class="gauge-label gauge-label-inner"></div>
+
+          <div class="gauge-title"></div>
+
+        </div>
+      </div>
+    `;
+
+    this.nodes = {
+      content: content,
+      title: content.querySelector('.gauge-title'),
+      outer: {
+        value: content.querySelector('.gauge-value-outer'),
+        label: content.querySelector('.gauge-label-outer'),
+      },
+      inner: {
+        value: content.querySelector('.gauge-value-inner'),
+        label: content.querySelector('.gauge-label-inner'),
+      }
+    };
+
+    if (this.config.title) {
+      this.nodes.title.innerHTML = this.config.title;
+      this.nodes.title.addEventListener('click', event => {
+        this._showDetails('outer');
+      });
+    }
+
+    this.nodes.outer.value.addEventListener('click', event => {
+      this._showDetails('outer');
+    });
+    this.nodes.inner.value.addEventListener('click', event => {
+      this._showDetails('inner');
+    });
+
+    if (this.config.shadeInner) {
+      this.nodes.content.classList.add('shadeInner');
+    }
+
+    if (this.config.cardwidth) {
+      this._setCssVariable(this.nodes.content, 'gauge-card-width', this.config.cardwidth + 'px');
+    }
+
+    if (this.config.background_color) {
+      this._setCssVariable(this.nodes.content, 'gauge-background-color', this.config.background_color);
+    }
+
+    // Add from issues - https://github.com/custom-cards/dual-gauge-card/issues/45
+    if (this.config.outer.fontsize) { 
+      this._setCssVariable(this.nodes.content, 'outer-font-size', this.config.outer.fontsize + 'px'); 
+    } 
+    
+    if (this.config.inner.fontsize) { 
+      this._setCssVariable(this.nodes.content, 'inner-font-size', this.config.inner.fontsize + 'px'); 
+    }
+
+    this._initStyles();
+  }
+
+  _setCssVariable(node, variable, value) {
+    node.style.setProperty('--' + variable, value);
+  }
+
+  _initStyles() {
+    this.styles.innerHTML = `
+      .tsgauge-card {
+        --gauge-card-width:300px;
+        --outer-value: 50;
+        --inner-value: 50;
+        --outer-color: var(--primary-color);
+        --inner-color: var(--primary-color);
+        --gauge-background-color: var(--secondary-background-color);
+
+        --outer-angle: 90deg;
+        --inner-angle: 90deg;
+        --gauge-width: calc(var(--gauge-card-width) / 10.5);
+        --value-font-size: calc(var(--gauge-card-width) / 17);
+        --title-font-size: calc(var(--gauge-card-width) / 14);
+        --label-font-size: calc(var(--gauge-card-width) / 20);
+
+        width: var(--gauge-card-width);
+        padding: 16px;
+        box-sizing:border-box;
+        margin: 6px auto;
+      }
+
+      .tsgauge-card div {
+        box-sizing:border-box
+      }
+      .tsgauge {
+        overflow: hidden;
+        width: 100%;
+        height: 0;
+        padding-bottom: 50%;
+      }
+
+      .gauge-frame {
+        width: 100%;
+        height: 0;
+        padding-bottom:100%;
+        position: relative;
+      }
+
+      .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 200%;
+        border-radius: 100%;
+        border: var(--gauge-width) solid;
+        transition: border-color .5s linear;
+      }
+
+      .circle-container {
+        position: absolute;
+        transform-origin: 50% 100%;
+        top: 0;
+        left: 0;
+        height: 50%;
+        width: 100%;
+        overflow: hidden;
+        transition: transform .5s linear;
+      }
+
+      .circle-container {
+        -webkit-clip-path: content-box;
+      } 
+
+      .small-circle .circle {
+        top: 20%;
+        left: 10%;
+        width: 80%;
+        height: 160%;
+      }
+
+      .gauge-background .circle {
+        border: calc(var(--gauge-width) * 2 - 2px) solid var(--gauge-background-color);
+      }
+
+      .gauge-title {
+        position: absolute;
+        bottom: 51%;
+        margin-bottom: 0.1em;
+        text-align: center;
+        width: 100%;
+        font-size: var(--title-font-size);
+      }
+
+      .gauge-value, .gauge-label {
+        position: absolute;
+        bottom: 50%;
+        width: 81%;
+        text-align: center;
+      }
+
+      .gauge-value {
+        margin-bottom:15%;
+        font-size: var(--value-font-size);
+        font-weight: bold;
+      }
+
+      .gauge-label {
+        font-size: var(--label-font-size);
+        margin-bottom:10%;
+      }
+
+      .gauge-value-outer, .gauge-label-outer {
+        color: var(--outer-color);
+        font-size: var(--outer-font-size);
+      }
+
+
+      .gauge-value-inner, .gauge-label-inner {
+        right: 0;
+        color: var(--inner-color);
+        font-size: var(--inner-font-size);
+      }
+
+
+      .outer-gauge {
+        transform: rotate(var(--outer-angle));
+      }
+
+      .outer-gauge .circle {
+        border-color: var(--outer-color);
+      }
+
+
+      .inner-gauge {
+        transform: rotate(var(--inner-angle));
+      }
+
+      .inner-gauge .circle {
+        border-color: var(--inner-color);
+      }
+
+      .shadeInner .gauge-value-inner, .shadeInner .gauge-label-inner, .shadeInner .inner-gauge .circle   {
+        filter: brightness(75%);
+      }
+
+    `;
+  }
+}
+
+customElements.define('tsgauge-card', TSGaugeCard);
