@@ -41,6 +41,7 @@ If you don't use HACS please change the url accordingly.
 | cardwidth        | int    | 300     | width of the card in pixels (see below)          |
 | outer            | object |         | config for the outer gauge                       |
 | inner            | object |         | config for the inner gauge                       |
+| fontsize         | int    |  20     | fontsize of entities                             |
 
 ### gauge config
 

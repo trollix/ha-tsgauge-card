@@ -1,4 +1,4 @@
-const CARD_VERSION = '0.1.4';
+const CARD_VERSION = '0.1.5';
 const CARD_NAME = "HA-TSGAUGE-CARD";
 console.info(
   `%c  ${CARD_NAME}  %c  Version ${CARD_VERSION}  `,
@@ -75,6 +75,9 @@ class TSGaugeCard extends HTMLElement {
       this.config.inner.fontsize = this.config.fontsize; 
     }
 
+    if (!this.config.dec_cut) {
+      this.config.dec_cut = true;
+    }
   }
 
   _update() {
@@ -138,7 +141,7 @@ class TSGaugeCard extends HTMLElement {
   _formatValue(value, gaugeConfig) {
     if (gaugeConfig.unit) {
       // Cut if décimals
-      return value + gaugeConfig.unit;
+      return Math.trunc(value) + gaugeConfig.unit;
     }
 
     return value;
