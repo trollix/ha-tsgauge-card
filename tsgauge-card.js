@@ -7,6 +7,7 @@ console.info(
 );
 
 class TSGaugeCard extends HTMLElement {
+  
   set hass(hass) {
     this._hass = hass;
 
@@ -18,6 +19,7 @@ class TSGaugeCard extends HTMLElement {
   }
 
   setConfig(config) {
+
     if (!config.inner|| !config.inner.entity) {
       throw new Error('You need to define an entity for the inner gauge');
     }
@@ -87,6 +89,7 @@ class TSGaugeCard extends HTMLElement {
   }
 
   _update() {
+
     if (this._hass.states[this.config['inner'].entity] == undefined ||
        this._hass.states[this.config['outer'].entity] == undefined) {
       console.warn("Undefined entity");
@@ -102,9 +105,7 @@ class TSGaugeCard extends HTMLElement {
       const content = document.createElement('p');
       content.style.background = "#e8e87a";
       content.style.padding = "8px";
-      content.innerHTML = "Error finding these entities:<br>- " +
-        this.config['inner'].entity +
-        "<br>- " + this.config['outer'].entity;
+      content.innerHTML = "Error finding these entities:<br>- " + this.config['inner'].entity + "<br>- " + this.config['outer'].entity;
       this.card.appendChild(content);
       
       this.appendChild(this.card);
@@ -158,7 +159,7 @@ class TSGaugeCard extends HTMLElement {
 
   _formatValue(value, gaugeConfig, decval) {
     
-      // Cut if décimals
+    // Cut if décimals
     let number = parseFloat(value);
     if (decval <1) {
       number = Math.trunc(number);
@@ -175,6 +176,7 @@ class TSGaugeCard extends HTMLElement {
   }
 
   _getEntityStateValue(entity, attribute) {
+
     if (!attribute) {
       if(isNaN(entity.state)) return "-" ; //check if entity state is NaN
       else return entity.state;
@@ -192,6 +194,7 @@ class TSGaugeCard extends HTMLElement {
   }
 
   _findColor(value, gaugeConfig) {
+
     if (!gaugeConfig.colors) return;
 
     var i = 0,
@@ -440,7 +443,7 @@ class TSGaugeCard extends HTMLElement {
       }
 
       .shadeInner .gauge-value-inner, .shadeInner .gauge-label-inner, .shadeInner .inner-gauge .circle   {
-        filter: brightness(75%);
+        filter: brightness(80%);
       }
 
     `;
