@@ -1,4 +1,4 @@
-const CARD_VERSION = '0.1.12';
+const CARD_VERSION = '0.1.13';
 const CARD_NAME = "HA-TSGAUGE-CARD";
 console.info(
   `%c  ${CARD_NAME}  %c  Version ${CARD_VERSION}  `,
@@ -77,10 +77,10 @@ class TSGaugeCard extends HTMLElement {
     }
 
     // Add decimal option
-    if (!this.config.inner.decval) {
+    if (this.config.inner.decval == undefined || this.config.inner.decval == null) {
       this.config.inner.decval = 1;
     }
-    if (!this.config.outer.decval) {
+    if (this.config.outer.decval == undefined || this.config.outer.decval == null) {
       this.config.outer.decval = 1;
     }
 
