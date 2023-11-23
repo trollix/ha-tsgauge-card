@@ -1,4 +1,4 @@
-const CARD_VERSION = '0.1.9';
+const CARD_VERSION = '0.1.10';
 const CARD_NAME = "HA-TSGAUGE-CARD";
 console.info(
   `%c  ${CARD_NAME}  %c  Version ${CARD_VERSION}  `,
@@ -122,15 +122,15 @@ class TSGaugeCard extends HTMLElement {
     const value = this._getEntityStateValue(this._hass.states[gaugeConfig.entity], gaugeConfig.attribute);
     let l_decval = 0;
 
-    if (gauge = 'outer') {
+    if (gauge == 'outer') {
       l_decval =  this.config.outer.decval
     }
-    if (gauge = 'inner') {
+    if (gauge == 'inner') {
       l_decval =  this.config.inner.decval
     }
 
     this._setCssVariable(this.nodes.content, gauge + '-angle', this._calculateRotation(value, gaugeConfig));
-    this.nodes[gauge].value.innerHTML = this._formatValue(value, gaugeConfig);
+    this.nodes[gauge].value.innerHTML = this._formatValue(value, gaugeConfig, l_decval);
     if (gaugeConfig.label) {
       this.nodes[gauge].label.innerHTML = gaugeConfig.label;
     }
@@ -156,15 +156,16 @@ class TSGaugeCard extends HTMLElement {
 
   _formatValue(value, gaugeConfig, decval) {
     
-    if (gaugeConfig.unit) {
-      
       // Cut if décimals
-      //let number = parseFloat(value);
-      //number.toFixed(decval);
-      return value + gaugeConfig.unit;
+    let number = parseFloat(value);
+    number = number.toFixed(decval);
+    
+    if (gaugeConfig.unit) {
+      return number + gaugeConfig.unit;
+    } else {
+      return number;
     }
 
-    return value;
   }
 
   _getEntityStateValue(entity, attribute) {
