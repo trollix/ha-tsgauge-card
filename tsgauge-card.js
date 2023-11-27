@@ -1,8 +1,4 @@
-const LitElement = Object.getPrototypeOf(customElements.get("ha-panel-lovelace"));
-const html = LitElement.prototype.html;
-const css = LitElement.prototype.css;
-
-const CARD_VERSION = '0.2.0';
+const CARD_VERSION = '0.2.1';
 const CARD_NAME = "HA-TSGAUGE-CARD";
 console.info(
   `%c  ${CARD_NAME}  %c  Version ${CARD_VERSION}  `,
@@ -10,7 +6,7 @@ console.info(
     'color: #000; font-weight: bold; background: #ddd',
 );
 
-class TSGaugeCard extends LitElement {
+class TSGaugeCard extends HTMLElement {
   
   set hass(hass) {
     this._hass = hass;
@@ -229,6 +225,33 @@ class TSGaugeCard extends LitElement {
     this.appendChild(this.card);
 
     content.classList.add('tsgauge-card');
+    content.innerHTML = `
+      <div class="tsgauge">
+        <div class="gauge-frame">
+          <div class="gauge-background circle-container">
+            <div class="circle"></div>
+          </div>
+
+          <div class="outer-gauge circle-container">
+            <div class="circle"></div>
+          </div>
+
+          <div class="inner-gauge circle-container small-circle">
+            <div class="circle"></div>
+          </div>
+
+
+          <div class="gauge-value gauge-value-outer"></div>
+          <div class="gauge-label gauge-label-outer"></div>
+
+          <div class="gauge-value gauge-value-inner"></div>
+          <div class="gauge-label gauge-label-inner"></div>
+
+          <div class="gauge-title"></div>
+
+        </div>
+      </div>
+    `;
 
     this.nodes = {
       content: content,
@@ -285,7 +308,8 @@ class TSGaugeCard extends LitElement {
     node.style.setProperty('--' + variable, value);
   }
 
-  static styles = css `
+  _initStyles() {
+    this.styles.innerHTML = `
       .tsgauge-card {
         --gauge-card-width:300px;
         --outer-value: 50;
@@ -347,7 +371,7 @@ class TSGaugeCard extends LitElement {
       }
 
       .circle-container {
-        -clip-path: circle();
+        -webkit-clip-path: content-box;
       } 
 
       .small-circle .circle {
@@ -423,40 +447,7 @@ class TSGaugeCard extends LitElement {
       }
 
     `;
-  
-
-  render() {
-    
-    return html`
-    <div class="tsgauge">
-      <div class="gauge-frame">
-        <div class="gauge-background circle-container">
-          <div class="circle"></div>
-        </div>
-
-        <div class="outer-gauge circle-container">
-          <div class="circle"></div>
-        </div>
-
-        <div class="inner-gauge circle-container small-circle">
-          <div class="circle"></div>
-        </div>
-
-
-        <div class="gauge-value gauge-value-outer"></div>
-        <div class="gauge-label gauge-label-outer"></div>
-
-        <div class="gauge-value gauge-value-inner"></div>
-        <div class="gauge-label gauge-label-inner"></div>
-
-        <div class="gauge-title"></div>
-
-      </div>
-    </div>
-  `;
-
   }
-
 }
 
 customElements.define('tsgauge-card', TSGaugeCard);
